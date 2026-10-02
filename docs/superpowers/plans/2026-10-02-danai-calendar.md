@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 一個純前端 PWA「大乃日曆」：國曆＋農曆＋節氣＋台灣假日＋當日專屬 Q 版大乃公仔場景圖（365 張）＋每日一句，加入主畫面後像會動的鎖屏卡。
+**Goal:** 一個純前端 PWA「大乃日曆」：國曆＋農曆＋節氣＋台灣假日＋當日專屬場景圖（沿用名句日日聽 365 張）＋每日一句，加入主畫面後像會動的鎖屏卡。
 
-**Architecture:** 無框架 ES modules；`calendar.js` 純函式算日期資訊（vendored lunar-javascript＋內建 holidays.json）；`quote.js`／`scene.js` 依「一年第幾天」取資料與圖；`app.js` 組裝 DOM 與互動；CSS keyframes 做動畫；service worker 快取 shell＋資料＋今日 ±7 天圖。圖片用 codex exec 生、rembg 去背、cwebp 壓縮。
+**Architecture:** 無框架 ES modules；`calendar.js` 純函式算日期資訊（vendored lunar-javascript＋內建 holidays.json）；`quote.js`／`scene.js` 依「一年第幾天」取資料與圖；`app.js` 組裝 DOM 與互動；CSS keyframes 做動畫；service worker 快取 shell＋資料＋今日 ±7 天圖。圖片直接從名句日日聽複製並用 cwebp 重壓。
 
-**Tech Stack:** HTML/CSS/JS (ESM)、lunar-javascript 1.7.7、Node 20+ `node --test`、codex exec（ChatGPT OAuth）、`uvx rembg`、cwebp、wrangler、netlify CLI。
+**Tech Stack:** HTML/CSS/JS (ESM)、lunar-javascript 1.7.7、Node 20+ `node --test`、cwebp、wrangler、netlify CLI。
 
 **Spec:** `docs/superpowers/specs/2026-10-02-danai-calendar-design.md`
 
@@ -15,8 +15,7 @@
 - 母版 `~/projects/danai-calendar`；GitHub `hk6429/danai-calendar` public；repo 內不得出現任何師生姓名。
 - 不推 Vercel；部署只 CF Pages（project `danai-calendar`）＋ Netlify（`--site <id>` 指定）。部署後 curl 回讀比 md5。
 - 無框架、無 build step、無 CDN；lunar-javascript vendored 到 `js/vendor/lunar.js`。
-- 場景圖 `img/d001.webp`…`d365.webp`，1024×1024，去背，每張 <150KB；缺圖用 `img/fallback.webp`。
-- 生圖：codex exec 走 OAuth 不走 API；序列跑（最多 2 並行）；每張 `perl -e 'alarm 300'` 逾時；落盤 >1MB 才算成功。
+- 場景圖 `img/d001.webp`…`d365.webp`，來源 `~/projects/daily-quotes-365/img/NNN.webp`，4:3、寬 900px、每張 <150KB；缺圖用 `img/fallback.webp`。不生新圖。
 - 動畫只用 transform/opacity；不對大元素用 `filter`；尊重 `prefers-reduced-motion`。
 - sw.js：改 data/js 必升 `VERSION`。
 - 每日一句不改句子內容（版權審查已在名句日日聽完成）。
@@ -27,7 +26,7 @@
 2. 跨日：App 開著放到隔天 00:00，畫面應自動換天。→ Task 5 `scheduleMidnightRefresh` 測試。
 3. 使用者裝置時區非台灣：農曆／假日應以裝置本地日期算，不用 UTC（`new Date()` 的 getFullYear/getMonth/getDate，不用 toISOString）。→ Task 2 測試 `dateKey uses local components`。
 4. holidays.json 沒有該年資料（例 2028）：不得拋錯，假日欄空白即可。→ Task 2 測試 `unknown year returns null holiday`。
-5. 某天圖未產出（404）：`<img>` onerror 換 fallback，且 sw 不得把 404 存進 cache。→ Task 5 onerror 測試＋ Task 6 sw 只 cache `res.ok`。
+5. 某天圖缺檔（404）：`<img>` onerror 換 fallback，且 sw 不得把 404 存進 cache。→ Task 5 onerror 測試＋ Task 6 sw 只 cache `res.ok`。
 
 ---
 
@@ -236,7 +235,7 @@ export const sceneSrc = doy => `img/d${String(Math.min(Math.max(doy, 1), 365)).p
 ### Task 4: 版面與動畫（index.html / app.css）
 
 **Files:**
-- Create: `index.html`, `css/app.css`, `img/fallback.webp`（暫用 `~/.claude/skills/picture/assets/mascots/20260519_danai_chibi_03_teaching.png` 轉：`cwebp -q 80 -resize 1024 0 <src> -o img/fallback.webp`）
+- Create: `index.html`, `css/app.css`, `img/fallback.webp`（`cwebp -q 78 -resize 900 0 ~/projects/daily-quotes-365/img/001.webp -o img/fallback.webp`）
 
 - [ ] **Step 1: `index.html`**
 
@@ -251,7 +250,7 @@ export const sceneSrc = doy => `img/d${String(Math.min(Math.max(doy, 1), 365)).p
 <main id="card">
   <header class="date"><div class="big"><span id="mon">OCT.</span><span id="day">2</span></div><div id="wd" class="wd">星期五</div></header>
   <p class="sub"><span id="lunar"></span><span class="dot">·</span><span id="term"></span><span id="holiday" class="tag" hidden></span></p>
-  <figure class="scene"><div id="particles" aria-hidden="true"></div><img id="mascot" alt="今日的大乃" decoding="async"></figure>
+  <figure class="scene"><div id="particles" aria-hidden="true"></div><img id="mascot" alt="今日場景" decoding="async"></figure>
   <blockquote id="quote" class="quote"><p id="qtext"></p><footer id="qmeta"></footer></blockquote>
 </main>
 <script src="js/vendor/lunar.js"></script>
@@ -268,8 +267,8 @@ export const sceneSrc = doy => `img/d${String(Math.min(Math.max(doy, 1), 365)).p
 .big{display:flex;align-items:baseline;gap:8px}#mon{font-size:22px;letter-spacing:.08em}#day{font-size:64px;font-weight:700;line-height:1}
 .wd,.sub{color:var(--muted);font-size:15px}.sub{margin:6px 0 0}.dot{margin:0 6px}.tag{margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px}
 .scene{position:relative;flex:1;min-height:40dvh;margin:12px 0;display:grid;place-items:center;overflow:hidden}
-#mascot{width:min(78vw,360px);aspect-ratio:1;object-fit:contain;animation:float 4s ease-in-out infinite,breathe 3s ease-in-out infinite,sway 6s ease-in-out infinite;transform-origin:50% 90%;will-change:transform}
-@keyframes float{50%{translate:0 -6px}}@keyframes breathe{50%{scale:1 1.02}}@keyframes sway{25%{rotate:1.5deg}75%{rotate:-1.5deg}}
+#mascot{width:min(88vw,420px);aspect-ratio:4/3;object-fit:cover;border-radius:22px;box-shadow:0 12px 30px rgba(60,40,20,.18);animation:float 4s ease-in-out infinite,sway 6s ease-in-out infinite;transform-origin:50% 100%;will-change:transform}
+@keyframes float{50%{translate:0 -6px}}@keyframes sway{25%{rotate:1deg}75%{rotate:-1deg}}
 .quote{margin:0;text-align:center}#qtext{font-size:18px;line-height:1.7;margin:0 0 6px}#qmeta{color:var(--muted);font-size:13px}
 #particles{position:absolute;inset:0;pointer-events:none}.p{position:absolute;top:-10%;opacity:.8;animation:fall linear infinite}
 @keyframes fall{to{translate:20px 120%;rotate:360deg;opacity:.2}}
@@ -437,67 +436,48 @@ self.addEventListener('fetch', e => {
 
 ---
 
-### Task 7: 場景圖產線（365 張）
+### Task 7: 場景圖（複製名句日日聽 365 張並重壓）
 
 **Files:**
-- Create: `scripts/build-prompts.mjs`, `scripts/gen-image.sh`, `scripts/gen-images-all.sh`, `scratch/prompts.json`（gitignored）
-- Produces: `img/d001..d365.webp`；PNG 原圖落 `~/projects/_danai-calendar-png/`（不進 iCloud、不進 repo）
+- Create: `scripts/build-images.sh`, `img/d001..d365.webp`, `test/images.test.mjs`
 
-- [ ] **Step 1: `scripts/build-prompts.mjs`**（把 scenes.json 的 chibi 主角換成大乃公仔，加季節線索）
+- [ ] **Step 1: 失敗測試 `test/images.test.mjs`**
 
 ```js
-import { readFileSync, writeFileSync } from 'node:fs';
-const scenes = JSON.parse(readFileSync(process.env.HOME + '/projects/daily-quotes-365/data/scenes.json', 'utf8')).sort((a, b) => a.id - b.id);
-const season = i => i < 46 || i >= 335 ? 'winter' : i < 137 ? 'spring' : i < 229 ? 'summer' : 'autumn';
-const hint = { winter: 'cozy winter mood, scarf', spring: 'spring mood, cherry blossoms', summer: 'bright summer mood', autumn: 'autumn mood, maple leaves' };
-const out = scenes.map((s, i) => ({ d: i + 1, prompt: s.image_prompt_en.replace(/^a chibi [^,]+/i, 'Danai the chibi teacher mascot (exactly as the reference image)') + `, ${hint[season(i)]}` }));
-writeFileSync('scratch/prompts.json', JSON.stringify(out, null, 1)); console.log(out.length);
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { statSync, existsSync } from 'node:fs';
+test('365 scene images, each < 150KB', () => {
+  for (let i = 1; i <= 365; i++) {
+    const f = `img/d${String(i).padStart(3, '0')}.webp`;
+    assert.ok(existsSync(f), f + ' missing');
+    assert.ok(statSync(f).size < 150 * 1024, f + ' too big');
+  }
+  assert.ok(existsSync('img/fallback.webp'));
+});
 ```
-跑後 `head -c 1500 scratch/prompts.json` 貼給使用者抽查 5 條再往下。
 
-- [ ] **Step 2: `scripts/gen-image.sh`**
+- [ ] **Step 2: 跑** `npm test` → FAIL (d001 missing)
+
+- [ ] **Step 3: `scripts/build-images.sh`**
 
 ```bash
 #!/bin/bash
-# usage: gen-image.sh <ddd> "<prompt>"  → ~/projects/_danai-calendar-png/dDDD.png → img/dDDD.webp（去背）
+# 從名句日日聽複製 365 張場景圖，重壓成寬 900 的 webp；已存在且 >20KB 就跳過
 set -u
-ID="$1"; SCENE="$2"
-ROOT="$HOME/projects/danai-calendar"; PNGDIR="$HOME/projects/_danai-calendar-png"; mkdir -p "$PNGDIR"
-RAW="$PNGDIR/d$ID.png"; CUT="$PNGDIR/d$ID.cut.png"; TMP="/tmp/dcal-$ID.png"; WEBP="$ROOT/img/d$ID.webp"
-MASCOT="$HOME/.claude/skills/picture/assets/mascots/20260519_danai_chibi_03_teaching.png"
-[ -f "$WEBP" ] && [ "$(stat -f%z "$WEBP")" -gt 20000 ] && { echo "skip $ID"; exit 0; }
-CODEX_REAL="$(realpath "$(command -v codex)")"
-PROMPT="請生成一張圖片，存成 ${TMP} 。Pixar-style 3D chibi mascot: the character must match the reference image exactly (same face, glasses, hair, outfit, proportions). Scene: ${SCENE}. Soft pastel palette, gentle warm lighting, single character, full body visible, centered. PLAIN SOLID PURE WHITE BACKGROUND (#FFFFFF), no floor shadow extending to edges, no text, no letters, no watermark. Square 1024x1024."
-/bin/rm -f "$TMP"
-if [ ! -f "$RAW" ]; then
-  cd "$HOME/Library/Mobile Documents/com~apple~CloudDocs/naicheng-claude-agent" && printf '%s' "$PROMPT" | perl -e 'alarm 300; exec @ARGV' "$CODEX_REAL" exec --skip-git-repo-check -i "$MASCOT" - >/tmp/dcal-$ID.log 2>&1
-  [ -f "$TMP" ] || TMP=$(ls -t ~/.codex/generated_images/*/*.png 2>/dev/null | head -1)
-  if [ -f "$TMP" ] && [ "$(stat -f%z "$TMP")" -gt 1000000 ]; then mv "$TMP" "$RAW"; else echo "FAIL $ID"; exit 1; fi
-fi
-uvx --from "rembg[cli]" rembg i "$RAW" "$CUT" >/dev/null 2>&1 || { echo "FAIL-rembg $ID"; exit 1; }
-cwebp -quiet -q 78 -resize 1024 1024 -alpha_q 90 "$CUT" -o "$WEBP" && echo "ok $ID $(stat -f%z "$WEBP")"
+SRC="$HOME/projects/daily-quotes-365/img"; cd "$(dirname "$0")/.." || exit 1
+for i in $(seq -w 1 365); do
+  OUT="img/d$i.webp"; [ -f "$OUT" ] && [ "$(stat -f%z "$OUT")" -gt 20000 ] && continue
+  [ -f "$SRC/$i.webp" ] || { echo "MISSING source $i"; continue; }
+  dwebp -quiet "$SRC/$i.webp" -o /tmp/dcal-$i.png && cwebp -quiet -q 76 -resize 900 0 /tmp/dcal-$i.png -o "$OUT" && /bin/rm -f /tmp/dcal-$i.png
+  [ "$(stat -f%z "$OUT")" -ge 153600 ] && cwebp -quiet -q 66 -resize 900 0 "$SRC/$i.webp" -o "$OUT"
+done
+cp img/d001.webp img/fallback.webp; ls img/d*.webp | wc -l
 ```
-⚠️ `ls -t generated_images` 撈最新圖在並行時可能撈到別人的；並行跑時用獨立 `CODEX_HOME`（見 [[feedback_imagegen_codex_oauth]]）或只序列跑。首次跑 `uvx rembg` 會下載模型（約 170MB）。
+（cwebp 不吃 webp 輸入，所以先 `dwebp` 轉 png；若 `dwebp` 不存在 `brew install webp`。）
 
-- [ ] **Step 3: 先試 3 張** `chmod +x scripts/*.sh; for d in 001 002 275; do p=$(node -e "console.log(require('./scratch/prompts.json').find(x=>x.d==$((10#$d))).prompt)"); scripts/gen-image.sh $d "$p"; done`，用 Read 看 `img/d001.webp`、`d275.webp`，確認像大乃、去背乾淨、<150KB；超過就把 `-q` 降到 70。給使用者看過再跑全量。
-
-- [ ] **Step 4: `scripts/gen-images-all.sh`**（兩線並行＋失敗重試）
-
-```bash
-#!/bin/bash
-cd "$(dirname "$0")/.." || exit 1
-LANES=${LANES:-2}; : > scratch/img-fail.txt
-node -e "for(const x of require('./scratch/prompts.json'))console.log(String(x.d).padStart(3,'0')+'\t'+x.prompt)" > scratch/img-list.tsv
-run_lane(){ awk -v n="$1" -v L="$LANES" 'NR % L == n' scratch/img-list.tsv | while IFS=$'\t' read -r id p; do scripts/gen-image.sh "$id" "$p" </dev/null || echo "$id	$p" >> scratch/img-fail.txt; done; }
-for ((i=0;i<LANES;i++)); do run_lane "$i" > "scratch/img-lane$i.log" 2>&1 & done; wait
-cp scratch/img-fail.txt scratch/img-fail-round1.txt
-while IFS=$'\t' read -r id p; do [ -n "$id" ] && scripts/gen-image.sh "$id" "$p" </dev/null; done < scratch/img-fail-round1.txt
-ls img/d*.webp | wc -l > scratch/img-done
-```
-`pkill -f "codex exec"` 清殭屍後 `nohup scripts/gen-images-all.sh > scratch/img-all.log 2>&1 &` 背景跑；完成後 push notification。預估 365 張 × 約 60–90 秒 ÷ 2 線 ≈ 3–5 小時。
-
-- [ ] **Step 5: 驗收** `ls img/d*.webp | wc -l` 須 365；`find img -name 'd*.webp' -size +150k` 應為空；隨機 Read 5 張。缺的列進 `scratch/img-missing.txt` 補跑。
-- [ ] **Step 6: Commit**（圖約 40–50MB，分兩次 commit 以免單次太大）`git add img && git commit -m "feat: 365 張場景圖"`；`git add scripts && git commit -m "feat: 生圖產線"`
+- [ ] **Step 4: 跑** `chmod +x scripts/build-images.sh && scripts/build-images.sh && npm test` → 印 365、PASS；`du -sh img` 預期約 35–45MB。用 Read 抽看 `img/d001.webp`、`img/d275.webp`。
+- [ ] **Step 5: Commit** `git add img scripts test && git commit -m "feat: 365 張場景圖（沿用名句日日聽）"`
 
 ---
 
@@ -518,4 +498,4 @@ for f in index.html js/app.js data/quotes.json; do L=$(md5 -q $f); for h in http
 curl -s -o /dev/null -w '%{http_code}\n' https://danai-calendar.pages.dev/img/d275.webp   # 200
 ```
 - [ ] **Step 7: 真機** iPhone Safari 開 pages.dev → 分享 → 加入主畫面 → 全螢幕開啟、飛航模式重開仍顯示。截圖給使用者。
-- [ ] **Step 8: 記憶** 寫 `project_danai_calendar_deploy.md`（網址、siteId、sw VERSION 規則、生圖續跑指令）並更新 MEMORY.md；naicheng.tw works.ts 補一筆列待辦。
+- [ ] **Step 8: 記憶** 寫 `project_danai_calendar_deploy.md`（網址、siteId、sw VERSION 規則、圖片來源）並更新 MEMORY.md；naicheng.tw works.ts 補一筆列待辦。

@@ -1,0 +1,6 @@
+node_modules/
+scratch/
+.netlify/
+.wrangler/
+.superpowers/
+.DS_Store

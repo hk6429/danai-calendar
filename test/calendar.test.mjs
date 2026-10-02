@@ -28,3 +28,5 @@ test('十一月/十二月 not 冬/腊', () => {
 });
 test('unknown year returns null holiday', () => assert.equal(dayInfo(D(2028, 1, 1), H, Solar).holiday, null));
 test('leap year dayOfYear 366', () => assert.equal(dayInfo(D(2028, 12, 31), {}, Solar).dayOfYear, 366));
+test('zodiac 豬 is traditional', () => assert.equal(dayInfo(D(2031, 3, 1), {}, Solar).zodiac, '豬'));
+test('leap 11th month 2033-12-22 is 閏十一月初一', () => assert.equal(dayInfo(D(2033, 12, 22), {}, Solar).lunar, '閏十一月初一'));

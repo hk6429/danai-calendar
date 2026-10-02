@@ -22,12 +22,7 @@ python3 -m http.server 4173   # 本機預覽
 改 `data/`、`js/`、`css/` 後要升 `sw.js` 的 `VERSION`。
 
 ## 部署
-在 `main` 分支執行：
-```bash
-wrangler pages deploy . --project-name danai-calendar --commit-dirty=true
-netlify deploy --prod --dir . --site <siteId>
-```
-部署後 curl 兩站 `index.html`／`js/app.js` 比 md5。不推 Vercel。
+在 `main` 分支、工作樹乾淨時執行 `scripts/deploy.sh`：只把上線檔案 rsync 到 stage 目錄推 CF Pages 與 Netlify，並 curl 回讀比 md5。不推 Vercel。
 
 ## 資料來源
 - 農曆／節氣：[lunar-javascript](https://github.com/6tail/lunar-javascript)（MIT），vendored 於 `js/vendor/lunar.js`，輸出轉繁體。

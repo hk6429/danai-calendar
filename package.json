@@ -1,3 +1,3 @@
 { "name": "danai-calendar", "private": true, "type": "module",
-  "scripts": { "test": "node --test test/", "build:quotes": "node scripts/build-quotes.mjs", "build:holidays": "node scripts/build-holidays.mjs", "build:images": "scripts/build-images.sh" },
+  "scripts": { "test": "node --test", "build:quotes": "node scripts/build-quotes.mjs", "build:holidays": "node scripts/build-holidays.mjs", "build:images": "scripts/build-images.sh" },
   "devDependencies": { "lunar-javascript": "1.7.7" } }

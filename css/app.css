@@ -1,0 +1,26 @@
+:root{--bg:#f6f1e7;--ink:#3b3630;--muted:#8a8178;--accent:#d9774a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Noto Serif TC","Songti TC","PingFang TC",serif;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#card{min-height:100dvh;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 24px);user-select:none;-webkit-user-select:none}
+.big{display:flex;align-items:baseline;gap:8px}
+#mon{font-size:22px;letter-spacing:.08em;font-family:"Avenir Next","Helvetica Neue",sans-serif;font-weight:600}
+#day{font-size:64px;font-weight:700;line-height:1;font-family:"Avenir Next","Helvetica Neue",sans-serif}
+.wd,.sub{color:var(--muted);font-size:15px}
+.sub{margin:6px 0 0}.dot{margin:0 6px}
+.tag{margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;vertical-align:1px}
+.tag.work{background:#7a8c9e}
+.scene{position:relative;flex:1;min-height:40dvh;margin:12px 0;display:grid;place-items:center;overflow:hidden}
+#mascot{width:min(88vw,420px);aspect-ratio:4/3;object-fit:cover;border-radius:22px;box-shadow:0 12px 30px rgba(60,40,20,.18);background:#fff;animation:float 4s ease-in-out infinite,sway 6s ease-in-out infinite;transform-origin:50% 100%;will-change:transform}
+@keyframes float{50%{translate:0 -6px}}
+@keyframes sway{25%{rotate:1deg}75%{rotate:-1deg}}
+.quote{margin:0;text-align:center;cursor:pointer}
+#qtext{font-size:18px;line-height:1.7;margin:0 0 6px}
+#qmeta{color:var(--muted);font-size:13px}
+#particles{position:absolute;inset:0;pointer-events:none;z-index:1}
+.p{position:absolute;top:-10%;opacity:.8;animation:fall linear infinite}
+@keyframes fall{to{translate:20px 120%;rotate:360deg;opacity:.2}}
+.p.spring{width:10px;height:7px;border-radius:50% 0;background:#f7b7c4}
+.p.summer{width:6px;height:6px;border-radius:50%;background:#ffe27a}
+.p.autumn{width:10px;height:6px;border-radius:60% 40%;background:#d08a4a}
+.p.winter{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 4px #cfe3ff}
+@media(prefers-reduced-motion:reduce){#mascot,.p{animation:none}}

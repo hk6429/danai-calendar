@@ -1,6 +1,6 @@
 // 改 data/js/css 必升 VERSION。shell/data：cache-first 後台更新（stale-while-revalidate）；img：cache-first，失敗回 fallback。
 // 頁面每次啟動 postMessage {type:'prefetch', urls} 預抓今日 ±7 天場景圖。
-const VERSION = 'dc-v2', MEDIA = 'dc-media';
+const VERSION = 'dc-v3', MEDIA = 'dc-media';
 const SHELL = ['./', 'css/app.css', 'js/app.js', 'js/calendar.js', 'js/quote.js', 'js/scene.js', 'js/particles.js', 'js/vendor/lunar.js', 'data/quotes.json', 'data/holidays.json', 'img/fallback.webp', 'manifest.webmanifest'];
 self.addEventListener('install', e => e.waitUntil((async () => {
   const c = await caches.open(VERSION);
